@@ -10,16 +10,18 @@ request(matchLink , function(err , res , data){
     processData(data);
 })
 
+let allMatchesLink ;
 function processData(html){
     let myDocument = cheerio.load(html);
 
     let aTag = myDocument(".widget-items.cta-link a");
     // console.log(aTag);
     // console.log(    aTag.attr("href")    );
-    let allMatchesLink = "https://www.espncricinfo.com" + aTag["0"].attribs.href;
+     allMatchesLink = "https://www.espncricinfo.com" + aTag["0"].attribs.href;
     // console.log(allMatchesLink);
     getAllMatches(allMatchesLink);
-   
 
+
+    
 
 }
