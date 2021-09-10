@@ -25,9 +25,12 @@ function addSheet() {
     switchSheet(sheetDiv);
   });
 
+  // remove all the data from current db cells
+  cleanUI();
   initDB();
-  initCells();
-  attachEventListeners();
+  // initCells();
+  // attachEventListeners();
+
   lastSelectedCell = undefined;
 }
 
@@ -38,18 +41,41 @@ function switchSheet(currentSheet) {
   document.querySelector(".active-sheet").classList.remove("active-sheet");
   currentSheet.classList.add("active-sheet");
 
+  cleanUI();
+
   //setDB
   let sid = currentSheet.getAttribute("sid");
-  db = sheetsDB[sid];
+  db = sheetsDB[sid].db;
+  visitedCells = sheetsDB[sid].visitedCells;
 
   // setUI ??
-  let lastCellIndex = 0;
-  for (let i = 0; i < db.length; i++) {
-    let dbRow = db[i];
-    for (let j = 0; j < dbRow.length; j++) {
-      allCells[lastCellIndex].textContent = dbRow[j].value;
-      lastCellIndex++;
+  // let lastCellIndex = 0;
+  // for (let i = 0; i < db.length; i++) {
+  //   let dbRow = db[i];
+  //   for (let j = 0; j < dbRow.length; j++) {
+  //     allCells[lastCellIndex].textContent = dbRow[j].value;
+  //     lastCellIndex++;
+  //   }
+  // }
+  // set UI optimized
+  for (let i = 0; i < visitedCells.length; i++) {
+    let { rowId, colId } = visitedCells[i];
+    let idx = Number(rowId) * 26 + Number(colId);
+    allCells[idx].textContent = db[rowId][colId].value;
+
+    let cellObject = db[rowId][colId];
+    let { bold, underline, italic } = cellObject.fontStyles;
+    if (bold) {
+      allCells[i].style.fontWeight = "bold";
     }
+    if (underline) {
+      allCells[i].style.textDecoration = "underline";
+    }
+    if (italic) {
+      allCells[i].style.fontStyle = "italic";
+    }
+    let textAlign = cellObject.textAlign;
+    allCells[i].style.textAlign = textAlign;
   }
 }
 
@@ -59,4 +85,20 @@ function attachEventListeners() {
   leftCol = document.querySelector(".left-col");
   allCells = document.querySelectorAll(".cell");
   attachClickAndBlurEventOnCell();
+}
+
+function cleanUI() {
+  let allActiveMenus = document.querySelectorAll(".active-menu");
+  if (allActiveMenus) {
+    for (let i = 0; i < allActiveMenus.length; i++) {
+      allActiveMenus[i].classList.remove("active-menu");
+    }
+  }
+  for (let i = 0; i < visitedCells.length; i++) {
+    let { rowId, colId } = visitedCells[i];
+    let idx = Number(rowId) * 26 + Number(colId);
+    console.log(idx);
+    allCells[idx].innerHTML = "";
+    allCells[idx].style = "";
+  }
 }

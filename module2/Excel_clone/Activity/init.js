@@ -1,27 +1,28 @@
 let cellsContainer = document.querySelector(".cells");
-let db ;
+
 let sheetsDB = [];
+let db; // points to current DB
+let visitedCells; // points to current visited cells
+
 function initCells() {
-
-    let cellsContent = '<div class = "top-left-cell"></div>' ; //ye top left wala portion hai
-
-    cellsContent += '<div class="top-row">'; //ye top row jo fixed rahegi
-    for (let j = 0; j < 26; j++) {
-    cellsContent += `<div class="top-row-cell">${String.fromCharCode(65+j)}</div>`; //fromCharCode is used to convert int value to a char on adding 65 in it
+  let cellsContent = '<div class="top-left-cell"></div>';
+  cellsContent += '<div class="top-row">';
+  for (let j = 0; j < 26; j++) {
+    cellsContent += `<div class="top-row-cell">${String.fromCharCode(
+      65 + j
+    )}</div>`;
   }
   cellsContent += "</div>";
-
-
-  cellsContent += '<div class="left-col">'; //ye leftmost column hai
+  cellsContent += '<div class="left-col">';
   for (let j = 0; j < 100; j++) {
     cellsContent += `<div class="left-col-cell">${j + 1}</div>`;
   }
-  cellsContent += "</div>" ;
+  cellsContent += "</div>";
   cellsContent += '<div class="all-cells">';
   for (let i = 0; i < 100; i++) {
     cellsContent += '<div class="row">';
     for (let j = 0; j < 26; j++) {
-        cellsContent += `<div class="cell" contenteditable="true" rowid="${i}" colid="${j}"></div>`;
+      cellsContent += `<div class="cell" contenteditable="true" rowid="${i}" colid="${j}"></div>`;
     }
     cellsContent += "</div>";
   }
@@ -29,29 +30,33 @@ function initCells() {
   cellsContainer.innerHTML = cellsContent;
 }
 
-
 function initDB() {
-    db = [];
-    for (let i = 0; i < 100; i++) {
-      let row = [];
-      for (let j = 0; j < 26; j++) {
-        // i=1
-        // j=1   =>   B2
-        let cellName = String.fromCharCode(65 + j) + (i + 1);
-        let cellObject = {
-          name: cellName,
-          value: "",
-          formula: "",
-          childrens:[],
-          parents:[]
-        };
-        row.push(cellObject);
-      }
-      db.push(row);
+  let newDB = [];
+  for (let i = 0; i < 100; i++) {
+    let row = [];
+    for (let j = 0; j < 26; j++) {
+      // i=1
+      // j=1   =>   B2
+      let cellName = String.fromCharCode(65 + j) + (i + 1);
+      let cellObject = {
+        name: cellName,
+        value: "",
+        formula: "",
+        childrens: [],
+        parents: [],
+        visited: false,
+        fontStyles:{bold:false , italic:false , underline:false },
+        textAlign:"left"
+      };
+      row.push(cellObject);
     }
-    sheetsDB.push(db);
+    newDB.push(row);
   }
+  let dbObject = { db: newDB, visitedCells: [] };
+  sheetsDB.push(dbObject);
+  db = newDB;
+  visitedCells = dbObject.visitedCells;
+}
 
 initCells();
 initDB();
-

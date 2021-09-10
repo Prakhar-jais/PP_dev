@@ -20,55 +20,76 @@ formulaInput.addEventListener("blur", function (e) {
   let formula = e.target.value;
   if (formula) {
     let cellObject = getCellObjectFromElement(lastSelectedCell);
-
-    if(cellObject.formula != formula){
+    if (cellObject.formula != formula) {
       deleteFormula(cellObject);
     }
 
-    let calculatedValue = solveFormula(formula,cellObject);
+    let calculatedValue = solveFormula(formula, cellObject);
     // UI Update
-    lastSelectedCell.textContent = calculatedValue;  //ye jo lastSelected Cell hai ye wo cell hai jahan pr tko formula ka ans chahiye ui pe aur uspe jaye toh formula bar pr wo formula
+    lastSelectedCell.textContent = calculatedValue;
     // DB Update
-    
     cellObject.value = calculatedValue;
     cellObject.formula = formula;
-     //childrens update
+
+    //childrens update
     updateChildrens(cellObject.childrens);
   }
 });
 
-function attachClickAndBlurEventOnCell(){
+function attachClickAndBlurEventOnCell() {
   for (let i = 0; i < allCells.length; i++) {
     allCells[i].addEventListener("click", function (e) {
       let cellObject = getCellObjectFromElement(e.target);
       address.value = cellObject.name;
       formulaInput.value = cellObject.formula;
+
+      let allActiveMenus = document.querySelectorAll(".active-menu");
+      if (allActiveMenus) {
+        for (let i = 0; i < allActiveMenus.length; i++) {
+          allActiveMenus[i].classList.remove("active-menu");
+        }
+      }
+
+      let {bold , underline , italic} = cellObject.fontStyles;
+      bold && document.querySelector(".bold").classList.add("active-menu");
+      underline && document.querySelector(".underline").classList.add("active-menu");
+      italic && document.querySelector(".italic").classList.add("active-menu");
+
+      let textAlign = cellObject.textAlign;
+      document.querySelector("."+textAlign).classList.add("active-menu");
     });
-  
+
     allCells[i].addEventListener("blur", function (e) {
       lastSelectedCell = e.target;
       // logic to save this value in db
       let cellValueFromUI = e.target.textContent;
       if (cellValueFromUI) {
         let cellObject = getCellObjectFromElement(e.target);
-  
+
         // check if the given cell has a formula on it
         if (cellObject.formula && cellValueFromUI != cellObject.value) {
           deleteFormula(cellObject);
-          formulaInput.value="";
+          formulaInput.value = "";
         }
-  
+
         // cellObject ki value update !!
         cellObject.value = cellValueFromUI;
-  
+
         //   update childrens of the current updated cell
         updateChildrens(cellObject.childrens);
+
+        // handle visited Cells
+        let rowId = lastSelectedCell.getAttribute("rowid");
+        let colId = lastSelectedCell.getAttribute("colid");
+        if (!cellObject.visited) {
+          visitedCells.push({ rowId, colId });
+          cellObject.visited = true;
+        }
       }
     });
   }
 }
 attachClickAndBlurEventOnCell();
-
 
 function deleteFormula(cellObject) {
   cellObject.formula = "";
@@ -89,32 +110,33 @@ function deleteFormula(cellObject) {
   cellObject.parents = [];
 }
 
-function solveFormula(formula,selfCellObject) {
-                                                                // tip : implement infix evalutaion
-                                                                // ( A1 + A2 ) => ( 10 + 20 );
+function solveFormula(formula, selfCellObject) {
+  // tip : implement infix evalutaion
+  // ( A1 + A2 ) => ( 10 + 20 );
   let formulaComps = formula.split(" ");
-                                                                // ["(" , "A1" , "+" , "A2" , ")"];
-                                                                                 // find valid component
+  // ["(" , "A1" , "+" , "A2" , ")"];
+  // find valid component
   for (let i = 0; i < formulaComps.length; i++) {
     let fComp = formulaComps[i];
     if (
-
-      (fComp[0] >= "A" && fComp[0] <= "Z") || (fComp[0] >= "a" && fComp <= "z")
-      ) 
-    {
-    let parentCellObject = getCellObjectFromName(fComp);
-    let value = parentCellObject.value;
-    if (selfCellObject) {
+      (fComp[0] >= "A" && fComp[0] <= "Z") ||
+      (fComp[0] >= "a" && fComp <= "z")
+    ) {
+      // A1 || A2
+      // fComp = A1
+      let parentCellObject = getCellObjectFromName(fComp);
+      let value = parentCellObject.value;
+      if (selfCellObject) {
         //add yourself as a child of parentCellObject
         parentCellObject.childrens.push(selfCellObject.name);
         // update your parents
         selfCellObject.parents.push(parentCellObject.name);
       }
-    formula = formula.replace(fComp, value);
+
+      formula = formula.replace(fComp, value);
     }
-  
   }
-                                                                        // ( 10 + 20 ) => infix evaluation
+  // ( 10 + 20 ) => infix evaluation
   let calculatedValue = eval(formula);
   return calculatedValue;
 }
@@ -126,6 +148,7 @@ function getCellObjectFromElement(element) {
 }
 
 function getCellObjectFromName(name) {
+  // A100
   let colId = name.charCodeAt(0) - 65;
   let rowId = Number(name.substring(1)) - 1;
   return db[rowId][colId];
@@ -142,10 +165,10 @@ function updateChildrens(childrens) {
     //ui update
     let colId = child.charCodeAt(0) - 65;
     let rowId = Number(child.substring(1)) - 1;
-    document.querySelector(`div[rowid="${rowId}"][colid="${colId}"]`).textContent = updatedValueOfChild;
+    document.querySelector(
+      `div[rowid="${rowId}"][colid="${colId}"]`
+    ).textContent = updatedValueOfChild;
     //recursive call
     updateChildrens(childCellObject.childrens);
-
-
   }
 }
